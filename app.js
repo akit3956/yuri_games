@@ -54,13 +54,9 @@ function preloadAnimalSounds() {
     const soundFiles = {
         dog:      'sounds/dog.mp3',
         cat:      'sounds/cat.mp3',
-        lion:     'sounds/lion.mp3',
-        bear:     'sounds/bear.mp3',
         elephant: 'sounds/elephant.mp3',
-        frog:     'sounds/frog.mp3',
-        monkey:   'sounds/monkey.mp3',
+        bear:     'sounds/bear.mp3',
         bird:     'sounds/bird.mp3',
-        dragon:   'sounds/lion.mp3'
     };
     for (const [key, src] of Object.entries(soundFiles)) {
         const audio = new Audio(src);
@@ -70,6 +66,17 @@ function preloadAnimalSounds() {
 }
 
 function playAnimalSound(key) {
+    if (key === 'yuri') {
+        // ゆうりちゃんは名前を読み上げ
+        if (window.speechSynthesis) {
+            const msg = new SpeechSynthesisUtterance('ゆうり！');
+            msg.rate = 0.85;
+            msg.pitch = 1.6;
+            msg.volume = 1.0;
+            window.speechSynthesis.speak(msg);
+        }
+        return;
+    }
     const audio = animalAudios[key];
     if (!audio) return;
     audio.currentTime = 0;
@@ -83,15 +90,12 @@ const emojis1 = ['✨', '🎈', '⭐', '🎵', '💖', '🌈', '🎉'];
 const emojis3 = ['🚓', '🚒', '🚑', '🚅', '🚕', '🚌', '🚜'];
 
 const animals = [
-    { emoji: '🐶', sound: 'dog' },
-    { emoji: '🐱', sound: 'cat' },
-    { emoji: '🦁', sound: 'lion' },
-    { emoji: '🐻', sound: 'bear' },
-    { emoji: '🐘', sound: 'elephant' },
-    { emoji: '🐸', sound: 'frog' },
-    { emoji: '🐵', sound: 'monkey' },
-    { emoji: '🐦', sound: 'bird' },
-    { emoji: '🐉', sound: 'dragon' }
+    { emoji: '🐶', sound: 'dog',      type: 'animal' },
+    { emoji: '🐱', sound: 'cat',      type: 'animal' },
+    { emoji: '🐘', sound: 'elephant', type: 'animal' },
+    { emoji: '🐻', sound: 'bear',     type: 'animal' },
+    { emoji: '🐦', sound: 'bird',     type: 'animal' },
+    { emoji: null,  sound: 'yuri',     type: 'yuri'   },
 ];
 
 function getRandom(arr) {
@@ -126,27 +130,40 @@ function initGame3() {
 // アクション処理
 // ==========================================
 function handleInteraction(x, y) {
-    const el = document.createElement('div');
-
     if (currentGame === 1) {
+        const el = document.createElement('div');
         playSound(1);
         el.className = 'particle';
         el.innerText = getRandom(emojis1);
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
         gameContainer.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
 
     } else if (currentGame === 2) {
         const animal = getRandom(animals);
         playAnimalSound(animal.sound);
 
-        el.className = 'animal-global';
-        el.innerText = animal.emoji;
+        const el = document.createElement('div');
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
+
+        if (animal.type === 'yuri') {
+            el.className = 'yuri-character';
+            const img = document.createElement('img');
+            img.src = 'images/yuri.png';
+            img.className = 'yuri-img';
+            el.appendChild(img);
+        } else {
+            el.className = 'animal-global';
+            el.innerText = animal.emoji;
+        }
+
         gameContainer.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
 
     } else if (currentGame === 3) {
+        const el = document.createElement('div');
         playSound(3);
         el.className = 'vehicle';
         el.innerText = getRandom(emojis3);
@@ -167,15 +184,7 @@ function handleInteraction(x, y) {
             el.style.left = goingRight ? `${window.innerWidth + 150}px` : `-150px`;
         }, 50);
 
-        setTimeout(() => {
-            el.remove();
-        }, 2600);
-    }
-
-    if (currentGame === 1 || currentGame === 2) {
-        el.addEventListener('animationend', () => {
-            el.remove();
-        });
+        setTimeout(() => el.remove(), 2600);
     }
 }
 
@@ -237,13 +246,9 @@ gameBtns.forEach(btn => {
         gameContainer.innerHTML = '';
         gameContainer.style.backgroundColor = '#ffebcd';
 
-        if (currentGame === 1) {
-            initGame1();
-        } else if (currentGame === 2) {
-            initGame2();
-        } else if (currentGame === 3) {
-            initGame3();
-        }
+        if (currentGame === 1) initGame1();
+        else if (currentGame === 2) initGame2();
+        else if (currentGame === 3) initGame3();
 
         adultMenu.classList.add('hidden');
     });
@@ -254,10 +259,6 @@ preloadAnimalSounds();
 
 // 初期化
 gameBtns[0].style.backgroundColor = '#a0e0a0';
-if (currentGame === 1) {
-    initGame1();
-} else if (currentGame === 2) {
-    initGame2();
-} else if (currentGame === 3) {
-    initGame3();
-}
+if (currentGame === 1) initGame1();
+else if (currentGame === 2) initGame2();
+else if (currentGame === 3) initGame3();
