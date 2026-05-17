@@ -1,0 +1,231 @@
+/* 【赤ちゃんガード】全体設定 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #222;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    touch-action: none;
+}
+
+#game-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background-color: #ffebcd;
+    transition: background-color 0.5s ease;
+}
+
+/* =========================================
+   アニメーション用クラス (ゲーム①、③)
+========================================= */
+
+.particle {
+    position: absolute;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+    font-size: 6rem;
+    z-index: 5;
+    animation: popAndFade 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popAndFade {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+.vehicle {
+    position: absolute;
+    pointer-events: none;
+    font-size: 8rem;
+    white-space: nowrap;
+    z-index: 5;
+    /* アニメーションはJavaScriptで動的に制御します */
+}
+
+/* =========================================
+   各ゲームの背景スタイル
+========================================= */
+
+#game1-background {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url('bg_candy.png');
+    background-size: cover;
+    background-position: center;
+    z-index: 1;
+    /* よりポップで明るい雰囲気に */
+    filter: brightness(1.1) contrast(1.1) saturate(1.2);
+}
+
+#game2-background {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url('background.png');
+    background-size: cover;
+    background-position: center;
+    z-index: 1;
+    /* 背景を少し暗く・ぼかして、手前のアイコン（おうち）を目立たせる */
+    filter: brightness(0.8) contrast(1.1);
+}
+
+#game3-background {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url('bg_city.png');
+    background-size: cover;
+    background-position: bottom center; /* 道路が下になるように調整 */
+    z-index: 1;
+}
+
+.home-wrapper {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 10;
+}
+
+.home-icon {
+    font-size: 9rem;
+    z-index: 10; /* おうちが手前 */
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s;
+    /* タップした時に少し沈むエフェクト */
+}
+.home-icon:active {
+    transform: scale(0.9) translateY(10px);
+}
+
+.home-animal {
+    position: absolute;
+    font-size: 7rem;
+    z-index: 5; /* 動物はおうちの後ろ！ */
+    bottom: 30px; 
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* 飛び出すアニメーション */
+.home-animal.pop {
+    animation: peekaboo 2.5s ease-in-out forwards;
+}
+
+@keyframes peekaboo {
+    0% { transform: translateY(0) scale(0.5); opacity: 0; }
+    15% { transform: translateY(-100px) scale(1.2); opacity: 1; }
+    30% { transform: translateY(-100px) scale(1) rotate(-15deg); opacity: 1; }
+    50% { transform: translateY(-100px) scale(1) rotate(15deg); opacity: 1; }
+    70% { transform: translateY(-100px) scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(20px) scale(0.8); opacity: 0; }
+}
+
+/* どこでもタップ用の動物アニメーション */
+.animal-global {
+    position: absolute;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    font-size: 8rem;
+    z-index: 5;
+    animation: popUpGlobal 1.5s ease-out forwards;
+}
+
+@keyframes popUpGlobal {
+    0% { transform: translate(-50%, -50%) scale(0) rotate(-20deg); }
+    20% { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); opacity: 1; }
+    40% { transform: translate(-50%, -50%) scale(1) rotate(-5deg); opacity: 1; }
+    80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 0; }
+}
+
+
+/* =========================================
+   大人用メニュー設定
+========================================= */
+
+#menu-trigger {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2.5rem;
+    opacity: 0.2;
+    cursor: pointer;
+    z-index: 1000;
+    transition: opacity 0.3s;
+}
+
+#menu-trigger:active {
+    opacity: 1;
+}
+
+#adult-menu {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#adult-menu.hidden {
+    display: none;
+}
+
+.menu-content {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 20px;
+    text-align: center;
+    width: 85%;
+    max-width: 500px;
+}
+
+.menu-content h2 { margin-bottom: 15px; color: #333; font-size: 1.8rem;}
+.menu-content p { margin-bottom: 25px; color: #666; font-size: 1rem; }
+
+.game-select-btn {
+    display: block;
+    width: 100%;
+    padding: 20px;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    background-color: #f0f0f0;
+    color: #333;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.game-select-btn:active {
+    background-color: #e0e0e0;
+    transform: translateY(2px);
+}
+
+#close-menu-btn {
+    margin-top: 15px;
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    background-color: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
