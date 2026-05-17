@@ -6,16 +6,21 @@ const gameBtns = document.querySelectorAll('.game-select-btn');
 
 let currentGame = 1;
 
-// ==========================================
-// 音声生成 (Web Audio API)
-// ==========================================
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-const audioCtx = new AudioContext();
+let audioCtx;
 
-function playSound(type) {
+function initAudio() {
+    if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+    }
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
     }
+}
+
+function playSound(type) {
+    initAudio();
+    
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     
@@ -45,12 +50,19 @@ function playSound(type) {
 // テキスト読み上げ (Web Speech API)
 // ==========================================
 function speakAnimalSound(text) {
-    window.speechSynthesis.cancel();
+    initAudio();
+    const synth = window.speechSynthesis;
+
+    // iOSではキューが詰まると無音になるため、喋り中・待機中はスキップ
+    if (synth.speaking || synth.pending) {
+        return;
+    }
+
     const msg = new SpeechSynthesisUtterance(text);
     msg.lang = 'ja-JP';
     msg.rate = 1.3;
     msg.pitch = 1.5;
-    window.speechSynthesis.speak(msg);
+    synth.speak(msg);
 }
 
 // ==========================================
@@ -69,7 +81,7 @@ const animals = [
     { emoji: '🐸', sound: 'ケロケロ！' },
     { emoji: '🐵', sound: 'ウキィー！' },
     { emoji: '🐦', sound: 'チュンチュン！' },
-    { emoji: '🐉', sound: 'ガオー！' } // ドラゴン追加
+    { emoji: '🐉', sound: 'ガオー！' }
 ];
 
 function getRandom(arr) {
@@ -136,32 +148,26 @@ function handleInteraction(x, y) {
         el.innerText = getRandom(emojis3);
         const goingRight = Math.random() > 0.5;
         
-        // タップした位置に車を配置
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
         
-        // 絵文字の乗り物は標準で「左向き」なので、右に進む時に反転(scaleX(-1))させる
         const flip = goingRight ? 'scaleX(-1)' : '';
         el.style.transform = `translate(-50%, -50%) scale(0) ${flip}`;
         el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
         
         gameContainer.appendChild(el);
         
-        // 少し遅れて、ポップイン完了後に元のサイズに戻しつつ画面外へ走り去る
         setTimeout(() => {
             el.style.transform = `translate(-50%, -50%) scale(1) ${flip}`;
             el.style.transition = 'left 2.5s ease-in, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            // 画面の端まで走らせる
             el.style.left = goingRight ? `${window.innerWidth + 150}px` : `-150px`;
         }, 50);
         
-        // 走り終わったら削除
         setTimeout(() => {
             el.remove();
         }, 2600);
     }
     
-    // ゲーム1用のイベント（ゲーム3ではJSタイマーで削除するため分岐）
     if (currentGame === 1 || currentGame === 2) {
         el.addEventListener('animationend', () => {
             el.remove();
