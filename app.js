@@ -50,12 +50,12 @@ function playSound(type) {
 // テキスト読み上げ (Web Speech API)
 // ==========================================
 function speakAnimalSound(text) {
-    // iOSはtouchendから呼ばれる必要がある（touchstartでは動作しない）
     if (!window.speechSynthesis) return;
     const msg = new SpeechSynthesisUtterance(text);
-    msg.lang = 'ja-JP';
-    msg.rate = 1.3;
+    // langを指定しない（日本語音声が未インストールの場合に無音になるバグ回避）
+    msg.rate = 1.0;
     msg.pitch = 1.5;
+    msg.volume = 1.0;
     window.speechSynthesis.speak(msg);
 }
 
