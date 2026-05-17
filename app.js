@@ -7,7 +7,6 @@ const gameBtns = document.querySelectorAll('.game-select-btn');
 let currentGame = 1;
 let audioCtx;
 
-// 同期的にAudioContextを初期化（非同期にするとChromeでユーザー操作と認識されなくなる）
 function initAudio() {
     if (!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -47,16 +46,34 @@ function playSound(type) {
 }
 
 // ==========================================
-// テキスト読み上げ (Web Speech API)
+// 動物の鳴き声（本物の音声ファイル）
 // ==========================================
-function speakAnimalSound(text) {
-    if (!window.speechSynthesis) return;
-    const msg = new SpeechSynthesisUtterance(text);
-    // langを指定しない（日本語音声が未インストールの場合に無音になるバグ回避）
-    msg.rate = 1.0;
-    msg.pitch = 1.5;
-    msg.volume = 1.0;
-    window.speechSynthesis.speak(msg);
+const animalAudios = {};
+
+function preloadAnimalSounds() {
+    const soundFiles = {
+        dog:      'sounds/dog.mp3',
+        cat:      'sounds/cat.mp3',
+        lion:     'sounds/lion.mp3',
+        bear:     'sounds/bear.mp3',
+        elephant: 'sounds/elephant.mp3',
+        frog:     'sounds/frog.mp3',
+        monkey:   'sounds/monkey.mp3',
+        bird:     'sounds/bird.mp3',
+        dragon:   'sounds/lion.mp3'
+    };
+    for (const [key, src] of Object.entries(soundFiles)) {
+        const audio = new Audio(src);
+        audio.preload = 'auto';
+        animalAudios[key] = audio;
+    }
+}
+
+function playAnimalSound(key) {
+    const audio = animalAudios[key];
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
 }
 
 // ==========================================
@@ -66,15 +83,15 @@ const emojis1 = ['✨', '🎈', '⭐', '🎵', '💖', '🌈', '🎉'];
 const emojis3 = ['🚓', '🚒', '🚑', '🚅', '🚕', '🚌', '🚜'];
 
 const animals = [
-    { emoji: '🐶', sound: 'ワンワン！' },
-    { emoji: '🐱', sound: 'ニャーニャー！' },
-    { emoji: '🦁', sound: 'ガオー！' },
-    { emoji: '🐻', sound: 'クマさんだぞー！' },
-    { emoji: '🐘', sound: 'パオーン！' },
-    { emoji: '🐸', sound: 'ケロケロ！' },
-    { emoji: '🐵', sound: 'ウキィー！' },
-    { emoji: '🐦', sound: 'チュンチュン！' },
-    { emoji: '🐉', sound: 'ガオー！' }
+    { emoji: '🐶', sound: 'dog' },
+    { emoji: '🐱', sound: 'cat' },
+    { emoji: '🦁', sound: 'lion' },
+    { emoji: '🐻', sound: 'bear' },
+    { emoji: '🐘', sound: 'elephant' },
+    { emoji: '🐸', sound: 'frog' },
+    { emoji: '🐵', sound: 'monkey' },
+    { emoji: '🐦', sound: 'bird' },
+    { emoji: '🐉', sound: 'dragon' }
 ];
 
 function getRandom(arr) {
@@ -121,7 +138,7 @@ function handleInteraction(x, y) {
 
     } else if (currentGame === 2) {
         const animal = getRandom(animals);
-        speakAnimalSound(animal.sound);
+        playAnimalSound(animal.sound);
 
         el.className = 'animal-global';
         el.innerText = animal.emoji;
@@ -165,13 +182,11 @@ function handleInteraction(x, y) {
 // ==========================================
 // イベントリスナー
 // ==========================================
-
-// touchstart: スクロール・ズームを防ぐだけ
 gameContainer.addEventListener('touchstart', (e) => {
     e.preventDefault();
+    initAudio();
 }, { passive: false });
 
-// touchend: ここで音を鳴らす（iOSのspeechSynthesisはtouchendが必要）
 gameContainer.addEventListener('touchend', (e) => {
     e.preventDefault();
     for (let i = 0; i < e.changedTouches.length; i++) {
@@ -180,7 +195,6 @@ gameContainer.addEventListener('touchend', (e) => {
     }
 }, { passive: false });
 
-// Mac/PC用マウス
 gameContainer.addEventListener('mousedown', (e) => {
     if (e.target !== menuTrigger) {
         handleInteraction(e.clientX, e.clientY);
@@ -234,6 +248,9 @@ gameBtns.forEach(btn => {
         adultMenu.classList.add('hidden');
     });
 });
+
+// 起動時に音声ファイルをプリロード
+preloadAnimalSounds();
 
 // 初期化
 gameBtns[0].style.backgroundColor = '#a0e0a0';
