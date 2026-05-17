@@ -6,23 +6,20 @@ const gameBtns = document.querySelectorAll('.game-select-btn');
 
 let currentGame = 1;
 let audioCtx;
-let lastSpeakTime = 0;
 
-// AudioContextをユーザー操作のタイミングで初期化・再開（awaitで確実に待つ）
-async function initAudio() {
+// 同期的にAudioContextを初期化（非同期にするとChromeでユーザー操作と認識されなくなる）
+function initAudio() {
     if (!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         audioCtx = new AudioContext();
     }
     if (audioCtx.state === 'suspended') {
-        try {
-            await audioCtx.resume();
-        } catch (e) {}
+        audioCtx.resume();
     }
 }
 
-async function playSound(type) {
-    await initAudio();
+function playSound(type) {
+    initAudio();
 
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -53,12 +50,8 @@ async function playSound(type) {
 // テキスト読み上げ (Web Speech API)
 // ==========================================
 function speakAnimalSound(text) {
-    // speaking/pendingチェックの代わりに時間ベースのデバウンス
-    // （iOSではspeaking状態がスタックすることがあるため）
-    const now = Date.now();
-    if (now - lastSpeakTime < 1500) return;
-    lastSpeakTime = now;
-
+    // iOSはtouchendから呼ばれる必要がある（touchstartでは動作しない）
+    if (!window.speechSynthesis) return;
     const msg = new SpeechSynthesisUtterance(text);
     msg.lang = 'ja-JP';
     msg.rate = 1.3;
@@ -89,7 +82,7 @@ function getRandom(arr) {
 }
 
 // ==========================================
-// ゲーム①の初期化
+// ゲーム初期化
 // ==========================================
 function initGame1() {
     gameContainer.innerHTML = '';
@@ -98,9 +91,6 @@ function initGame1() {
     gameContainer.appendChild(bg);
 }
 
-// ==========================================
-// ゲーム②の初期化
-// ==========================================
 function initGame2() {
     gameContainer.innerHTML = '';
     const bg = document.createElement('div');
@@ -108,9 +98,6 @@ function initGame2() {
     gameContainer.appendChild(bg);
 }
 
-// ==========================================
-// ゲーム③の初期化
-// ==========================================
 function initGame3() {
     gameContainer.innerHTML = '';
     const bg = document.createElement('div');
@@ -119,9 +106,9 @@ function initGame3() {
 }
 
 // ==========================================
-// アクション処理（タッチされた時）
+// アクション処理
 // ==========================================
-async function handleInteraction(x, y) {
+function handleInteraction(x, y) {
     const el = document.createElement('div');
 
     if (currentGame === 1) {
@@ -178,7 +165,14 @@ async function handleInteraction(x, y) {
 // ==========================================
 // イベントリスナー
 // ==========================================
+
+// touchstart: スクロール・ズームを防ぐだけ
 gameContainer.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+}, { passive: false });
+
+// touchend: ここで音を鳴らす（iOSのspeechSynthesisはtouchendが必要）
+gameContainer.addEventListener('touchend', (e) => {
     e.preventDefault();
     for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
@@ -186,6 +180,7 @@ gameContainer.addEventListener('touchstart', (e) => {
     }
 }, { passive: false });
 
+// Mac/PC用マウス
 gameContainer.addEventListener('mousedown', (e) => {
     if (e.target !== menuTrigger) {
         handleInteraction(e.clientX, e.clientY);
