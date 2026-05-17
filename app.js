@@ -81,6 +81,11 @@ function playAnimalSound(key) {
     if (!audio) return;
     audio.currentTime = 0;
     audio.play().catch(() => {});
+    // 0.8秒後に止める
+    setTimeout(() => {
+        audio.pause();
+        audio.currentTime = 0;
+    }, 800);
 }
 
 // ==========================================
