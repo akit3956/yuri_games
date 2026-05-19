@@ -84,14 +84,7 @@ function preloadAnimalSounds() {
 
 function playAnimalSound(key) {
     if (key === 'yuri') {
-        // ゆうりちゃんは名前を読み上げ
-        if (window.speechSynthesis) {
-            const msg = new SpeechSynthesisUtterance('ゆうり！');
-            msg.rate = 0.85;
-            msg.pitch = 1.6;
-            msg.volume = 1.0;
-            window.speechSynthesis.speak(msg);
-        }
+        speakYuri();
         return;
     }
     const audio = animalAudios[key];
@@ -149,26 +142,78 @@ function initGame3() {
 }
 
 // ==========================================
+// ゆうりちゃん表示（全ゲーム共通）
+// ==========================================
+function speakYuri() {
+    if (!window.speechSynthesis) return;
+    const msg = new SpeechSynthesisUtterance('ゆうり！');
+    msg.rate = 0.85;
+    msg.pitch = 1.6;
+    msg.volume = 1.0;
+    window.speechSynthesis.speak(msg);
+}
+
+function showYuriPop(x, y) {
+    const el = document.createElement('div');
+    el.className = 'yuri-character';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    const img = document.createElement('img');
+    img.src = 'images/yuri.png';
+    img.className = 'yuri-img';
+    el.appendChild(img);
+    gameContainer.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+    speakYuri();
+}
+
+function showYuriDrive(y) {
+    const goingRight = Math.random() > 0.5;
+    const el = document.createElement('div');
+    el.className = 'yuri-character';
+    el.style.top = y + 'px';
+    el.style.left = (goingRight ? -100 : window.innerWidth + 100) + 'px';
+    el.style.transform = 'translate(-50%, -50%)';
+    el.style.transition = 'left 2.5s ease-in';
+    const img = document.createElement('img');
+    img.src = 'images/yuri.png';
+    img.className = 'yuri-img';
+    el.appendChild(img);
+    gameContainer.appendChild(el);
+    setTimeout(() => {
+        el.style.left = (goingRight ? window.innerWidth + 100 : -100) + 'px';
+    }, 50);
+    setTimeout(() => el.remove(), 2600);
+    speakYuri();
+}
+
+// ==========================================
 // アクション処理
 // ==========================================
 function handleInteraction(x, y) {
+    const yuriAppears = Math.random() < 0.2;
+
     if (currentGame === 1) {
-        const el = document.createElement('div');
         playSound(1);
-        el.className = 'particle';
-        el.innerText = getRandom(emojis1);
-        el.style.left = `${x}px`;
-        el.style.top = `${y}px`;
-        gameContainer.appendChild(el);
-        el.addEventListener('animationend', () => el.remove());
+        if (yuriAppears) {
+            showYuriPop(x, y);
+        } else {
+            const el = document.createElement('div');
+            el.className = 'particle';
+            el.innerText = getRandom(emojis1);
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            gameContainer.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+        }
 
     } else if (currentGame === 2) {
         const animal = getRandom(animals);
         playAnimalSound(animal.sound);
 
         const el = document.createElement('div');
-        el.style.left = `${x}px`;
-        el.style.top = `${y}px`;
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
 
         if (animal.type === 'yuri') {
             el.className = 'yuri-character';
@@ -185,28 +230,27 @@ function handleInteraction(x, y) {
         el.addEventListener('animationend', () => el.remove());
 
     } else if (currentGame === 3) {
-        const el = document.createElement('div');
         playSound(3);
-        el.className = 'vehicle';
-        el.innerText = getRandom(emojis3);
-        const goingRight = Math.random() > 0.5;
-
-        el.style.left = `${x}px`;
-        el.style.top = `${y}px`;
-
-        const flip = goingRight ? 'scaleX(-1)' : '';
-        el.style.transform = `translate(-50%, -50%) scale(0) ${flip}`;
-        el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-
-        gameContainer.appendChild(el);
-
-        setTimeout(() => {
-            el.style.transform = `translate(-50%, -50%) scale(1) ${flip}`;
-            el.style.transition = 'left 2.5s ease-in, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            el.style.left = goingRight ? `${window.innerWidth + 150}px` : `-150px`;
-        }, 50);
-
-        setTimeout(() => el.remove(), 2600);
+        if (yuriAppears) {
+            showYuriDrive(y);
+        } else {
+            const el = document.createElement('div');
+            el.className = 'vehicle';
+            el.innerText = getRandom(emojis3);
+            const goingRight = Math.random() > 0.5;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            const flip = goingRight ? 'scaleX(-1)' : '';
+            el.style.transform = 'translate(-50%, -50%) scale(0) ' + flip;
+            el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            gameContainer.appendChild(el);
+            setTimeout(() => {
+                el.style.transform = 'translate(-50%, -50%) scale(1) ' + flip;
+                el.style.transition = 'left 2.5s ease-in, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                el.style.left = (goingRight ? window.innerWidth + 150 : -150) + 'px';
+            }, 50);
+            setTimeout(() => el.remove(), 2600);
+        }
     }
 }
 
