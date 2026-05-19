@@ -2,38 +2,35 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <!-- 【赤ちゃんガード】画面の拡大縮小を禁止する設定 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <!-- iOSのフルスクリーンモード用 -->
     <meta name="apple-mobile-web-app-capable" content="no">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
     <title>ぽんぽん・ぱっ！ 〜ゆうりのおとあそび〜</title>
+    <!-- かわいいフォント -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ゲーム画面全体 -->
     <div id="game-container"></div>
 
-    <!-- 大人用メニューを開く隠しボタン（右下や左上に配置） -->
-    <div id="menu-trigger" title="長押しでメニュー表示">⚙️</div>
+    <div id="menu-trigger" title="メニュー">⚙️</div>
 
-    <!-- 大人用のゲーム切り替えメニュー（普段は非表示） -->
     <div id="adult-menu" class="hidden">
         <div class="menu-content">
             <p class="game-title">ぽんぽん・ぱっ！</p>
             <p class="game-subtitle">〜ゆうりのおとあそび〜</p>
             <p class="game-desc">あそびをえらんでね</p>
-            <button class="game-select-btn" data-game="1">✨ キラキラ・ポンポン</button>
-            <button class="game-select-btn" data-game="2">🐶 どうぶつ いないいないばぁ</button>
-            <button class="game-select-btn" data-game="3">🚗 のりもの ブーブー</button>
-            <button id="close-menu-btn">とじる</button>
+            <div class="btn-row">
+                <button class="game-select-btn" data-game="1">✨<br>キラキラ<br>ポンポン</button>
+                <button class="game-select-btn" data-game="2">🐶<br>どうぶつ<br>いないばぁ</button>
+                <button class="game-select-btn" data-game="3">🚗<br>のりもの<br>ブーブー</button>
+            </div>
         </div>
     </div>
 
-    <!-- 音声生成用のWeb Audio APIを使用するため音声ファイルは不要 -->
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=14"></script>
 </body>
 </html>

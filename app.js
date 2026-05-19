@@ -1,7 +1,6 @@
 const gameContainer = document.getElementById('game-container');
 const menuTrigger = document.getElementById('menu-trigger');
 const adultMenu = document.getElementById('adult-menu');
-const closeMenuBtn = document.getElementById('close-menu-btn');
 const gameBtns = document.querySelectorAll('.game-select-btn');
 
 let currentGame = 1;
@@ -244,11 +243,6 @@ menuTrigger.addEventListener('touchend', (e) => {
 menuTrigger.addEventListener('click', () => {
     adultMenu.classList.remove('hidden');
     startBGM();
-});
-
-closeMenuBtn.addEventListener('click', () => {
-    adultMenu.classList.add('hidden');
-    stopBGM();
 });
 
 gameBtns.forEach(btn => {
