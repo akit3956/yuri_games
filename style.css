@@ -203,12 +203,15 @@ body, html {
 }
 
 .menu-content {
-    background: white;
-    padding: 40px 30px;
-    border-radius: 20px;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 36px 28px;
+    border-radius: 24px;
     text-align: center;
     width: 85%;
     max-width: 500px;
+    border: 2px solid rgba(255,255,255,0.4);
 }
 
 .menu-content h2 { margin-bottom: 15px; color: #333; font-size: 1.8rem;}
@@ -223,7 +226,7 @@ body, html {
     font-weight: bold;
     border: none;
     border-radius: 10px;
-    background-color: #f0f0f0;
+    background-color: rgba(255,255,255,0.88);
     color: #333;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -264,4 +267,30 @@ body, html {
     object-position: center top;
     border: 6px solid #ff9eb5;
     box-shadow: 0 0 25px rgba(255, 158, 181, 0.9), 0 0 50px rgba(255, 200, 220, 0.5);
+}
+
+/* =========================================
+   ホーム画面タイトル
+========================================= */
+.game-title {
+    font-size: 2.4rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 3px 8px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.5);
+    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+}
+
+.game-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.92);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    margin-bottom: 24px;
+    letter-spacing: 0.08em;
+}
+
+.game-desc {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 20px;
 }
