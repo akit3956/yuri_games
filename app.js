@@ -218,25 +218,13 @@ gameContainer.addEventListener('mousedown', (e) => {
 // ==========================================
 // 大人用メニュー
 // ==========================================
-let menuTimer;
-
-function startMenuTimer() {
-    menuTimer = setTimeout(() => {
-        adultMenu.classList.remove('hidden');
-    }, 1000);
-}
-function clearMenuTimer() {
-    clearTimeout(menuTimer);
-}
-
-menuTrigger.addEventListener('touchstart', (e) => {
+menuTrigger.addEventListener('touchend', (e) => {
     e.preventDefault();
-    startMenuTimer();
+    adultMenu.classList.remove('hidden');
 });
-menuTrigger.addEventListener('touchend', clearMenuTimer);
-menuTrigger.addEventListener('mousedown', startMenuTimer);
-menuTrigger.addEventListener('mouseup', clearMenuTimer);
-menuTrigger.addEventListener('mouseleave', clearMenuTimer);
+menuTrigger.addEventListener('click', () => {
+    adultMenu.classList.remove('hidden');
+});
 
 closeMenuBtn.addEventListener('click', () => {
     adultMenu.classList.add('hidden');
@@ -262,8 +250,6 @@ gameBtns.forEach(btn => {
 // 起動時に音声ファイルをプリロード
 preloadAnimalSounds();
 
-// 初期化
-gameBtns[0].style.backgroundColor = '#a0e0a0';
-if (currentGame === 1) initGame1();
-else if (currentGame === 2) initGame2();
-else if (currentGame === 3) initGame3();
+// 初期化 - ホーム画面（ゲーム選択）を最初に表示
+initGame1();
+adultMenu.classList.remove('hidden');

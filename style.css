@@ -160,27 +160,42 @@ body, html {
 
 #menu-trigger {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    font-size: 2.5rem;
-    opacity: 0.2;
+    top: 16px;
+    right: 16px;
+    font-size: 2rem;
     cursor: pointer;
     z-index: 1000;
-    transition: opacity 0.3s;
+    background: rgba(255,255,255,0.92);
+    border-radius: 50%;
+    width: 54px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    transition: transform 0.1s;
 }
 
 #menu-trigger:active {
-    opacity: 1;
+    transform: scale(0.9);
 }
 
 #adult-menu {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-color: rgba(0, 0, 0, 0.85);
+    background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #c77dff);
+    background-size: 400% 400%;
+    animation: gradientShift 5s ease infinite;
     z-index: 2000;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+@keyframes gradientShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 #adult-menu.hidden {
