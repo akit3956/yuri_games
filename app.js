@@ -7,6 +7,24 @@ const gameBtns = document.querySelectorAll('.game-select-btn');
 let currentGame = 1;
 let audioCtx;
 
+// BGM
+const bgm = new Audio('sounds/bgm.mp3');
+bgm.loop = true;
+bgm.volume = 0.4;
+
+function startBGM() {
+    if (bgm.paused) {
+        bgm.play().catch(() => {});
+    }
+}
+
+function stopBGM() {
+    if (!bgm.paused) {
+        bgm.pause();
+        bgm.currentTime = 0;
+    }
+}
+
 function initAudio() {
     if (!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -221,13 +239,16 @@ gameContainer.addEventListener('mousedown', (e) => {
 menuTrigger.addEventListener('touchend', (e) => {
     e.preventDefault();
     adultMenu.classList.remove('hidden');
+    startBGM();
 });
 menuTrigger.addEventListener('click', () => {
     adultMenu.classList.remove('hidden');
+    startBGM();
 });
 
 closeMenuBtn.addEventListener('click', () => {
     adultMenu.classList.add('hidden');
+    stopBGM();
 });
 
 gameBtns.forEach(btn => {
@@ -244,6 +265,7 @@ gameBtns.forEach(btn => {
         else if (currentGame === 3) initGame3();
 
         adultMenu.classList.add('hidden');
+        stopBGM();
     });
 });
 
@@ -253,3 +275,13 @@ preloadAnimalSounds();
 // 初期化 - ホーム画面（ゲーム選択）を最初に表示
 initGame1();
 adultMenu.classList.remove('hidden');
+
+// 最初のタッチでBGM開始（iOSはユーザー操作後でないと再生できない）
+document.addEventListener('touchend', function startBGMOnce() {
+    startBGM();
+    document.removeEventListener('touchend', startBGMOnce);
+}, { once: true });
+document.addEventListener('click', function startBGMOnce() {
+    startBGM();
+    document.removeEventListener('click', startBGMOnce);
+}, { once: true });
