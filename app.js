@@ -2,7 +2,6 @@ const gameContainer = document.getElementById('game-container');
 const menuTrigger = document.getElementById('menu-trigger');
 const adultMenu = document.getElementById('adult-menu');
 const gameBtns = document.querySelectorAll('.game-select-btn');
-const ehonFrame = document.getElementById('ehon-frame');
 
 let currentGame = 1;
 let audioCtx;
@@ -300,11 +299,9 @@ gameBtns.forEach(btn => {
         stopBGM();
 
         if (currentGame === 4) {
-            gameContainer.style.display = 'none';
-            ehonFrame.style.display = 'block';
+            // 絵本はページ遷移（iOSのSpeech APIはiframe内で動かないため）
+            window.location.href = 'ehon.html';
         } else {
-            ehonFrame.style.display = 'none';
-            gameContainer.style.display = '';
             gameContainer.innerHTML = '';
             gameContainer.style.backgroundColor = '#ffebcd';
             if (currentGame === 1) initGame1();
