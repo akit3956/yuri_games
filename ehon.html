@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>あかちゃんのえほん</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Hiragino Maru Gothic Pro', 'Rounded Mplus 1c', sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .book-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    max-width: 480px;
+    max-height: 860px;
+    margin: auto;
+    overflow: hidden;
+    border-radius: 0;
+    box-shadow: 0 0 60px rgba(0,0,0,0.6);
+  }
+
+  @media (min-width: 500px) {
+    .book-container {
+      border-radius: 24px;
+    }
+  }
+
+  /* ページ */
+  .page {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    padding: 20px;
+  }
+
+  .page.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* ========== ページ1：タイトル ========== */
+  .page-title { background: linear-gradient(160deg, #FF6B9D 0%, #FFB347 50%, #FFE66D 100%); }
+
+  .title-text {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .title-main {
+    font-size: clamp(28px, 8vw, 48px);
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 3px 4px 0px rgba(0,0,0,0.15);
+    letter-spacing: 4px;
+    line-height: 1.3;
+  }
+
+  .title-sub {
+    font-size: clamp(14px, 4vw, 20px);
+    color: rgba(255,255,255,0.85);
+    margin-top: 8px;
+    letter-spacing: 2px;
+  }
+
+  /* ========== SVGイラスト共通 ========== */
+  .illustration {
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.1s ease;
+  }
+
+  .illustration:active { transform: scale(0.95); }
+
+  .illustration.bounce {
+    animation: bounceAnim 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+
+  @keyframes bounceAnim {
+    0%   { transform: scale(1); }
+    20%  { transform: scale(1.18) rotate(-3deg); }
+    40%  { transform: scale(0.9) rotate(3deg); }
+    60%  { transform: scale(1.1) rotate(-2deg); }
+    80%  { transform: scale(0.97); }
+    100% { transform: scale(1); }
+  }
+
+  .illustration.spin {
+    animation: spinAnim 0.6s ease;
+  }
+
+  @keyframes spinAnim {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  .illustration.wobble {
+    animation: wobbleAnim 0.5s ease;
+  }
+
+  @keyframes wobbleAnim {
+    0%   { transform: translateX(0); }
+    20%  { transform: translateX(-12px) rotate(-5deg); }
+    40%  { transform: translateX(10px) rotate(4deg); }
+    60%  { transform: translateX(-8px) rotate(-3deg); }
+    80%  { transform: translateX(6px) rotate(2deg); }
+    100% { transform: translateX(0); }
+  }
+
+  .illustration.pop {
+    animation: popAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes popAnim {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.25); }
+    100% { transform: scale(1); }
+  }
+
+  /* ========== テキスト ========== */
+  .word-main {
+    font-size: clamp(36px, 11vw, 64px);
+    font-weight: 900;
+    text-align: center;
+    margin-top: 12px;
+    line-height: 1.1;
+    text-shadow: 2px 3px 0px rgba(0,0,0,0.12);
+  }
+
+  .word-sound {
+    font-size: clamp(22px, 7vw, 42px);
+    font-weight: 800;
+    text-align: center;
+    margin-top: 6px;
+    letter-spacing: 3px;
+    transition: transform 0.3s ease;
+  }
+
+  .word-sound.ping {
+    animation: pingAnim 0.6s ease;
+  }
+
+  @keyframes pingAnim {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.4); }
+    70%  { transform: scale(0.9); }
+    100% { transform: scale(1); }
+  }
+
+  .tap-hint {
+    font-size: clamp(11px, 3.2vw, 15px);
+    color: rgba(255,255,255,0.6);
+    margin-top: 10px;
+    letter-spacing: 1px;
+  }
+
+  /* ========== ナビゲーション ========== */
+  .nav {
+    position: absolute;
+    bottom: 28px;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .nav-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(6px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.15s ease;
+    color: white;
+  }
+
+  .nav-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.4); }
+  .nav-btn:disabled { opacity: 0.2; pointer-events: none; }
+
+  .dots {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .dot.active {
+    width: 22px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.9);
+  }
+
+  /* ========== ページ個別スタイル ========== */
+
+  /* Page 1: タイトル */
+  .page-title { background: linear-gradient(150deg, #FF6B9D, #FFB347); }
+
+  /* Page 2: いぬ */
+  .page-dog { background: linear-gradient(150deg, #87CEEB, #E0F4FF); }
+  .page-dog .word-main { color: #3a3a6e; }
+  .page-dog .word-sound { color: #FF6B35; }
+  .page-dog .tap-hint { color: rgba(58,58,110,0.5); }
+
+  /* Page 3: ねこ */
+  .page-cat { background: linear-gradient(150deg, #FFD9EC, #FFF0F5); }
+  .page-cat .word-main { color: #6e3a5a; }
+  .page-cat .word-sound { color: #FF69B4; }
+  .page-cat .tap-hint { color: rgba(110,58,90,0.5); }
+
+  /* Page 4: ボール */
+  .page-ball { background: linear-gradient(150deg, #C8F7C5, #E8FFF0); }
+  .page-ball .word-main { color: #2d6e3a; }
+  .page-ball .word-sound { color: #22AA55; }
+  .page-ball .tap-hint { color: rgba(45,110,58,0.5); }
+
+  /* Page 5: たいよう */
+  .page-sun { background: linear-gradient(150deg, #FFF9C4, #FFFDE7); }
+  .page-sun .word-main { color: #7a5800; }
+  .page-sun .word-sound { color: #FF9800; }
+  .page-sun .tap-hint { color: rgba(122,88,0,0.5); }
+
+  /* Page 6: りんご */
+  .page-apple { background: linear-gradient(150deg, #FFE0E0, #FFF5F5); }
+  .page-apple .word-main { color: #6e1a1a; }
+  .page-apple .word-sound { color: #E53935; }
+  .page-apple .tap-hint { color: rgba(110,26,26,0.5); }
+
+  /* Page 7: おつき */
+  .page-moon { background: linear-gradient(150deg, #1a1a4e, #2d2d7e); }
+  .page-moon .word-main { color: #FFE66D; }
+  .page-moon .word-sound { color: #B0C4DE; }
+  .page-moon .tap-hint { color: rgba(176,196,222,0.5); }
+
+  /* ========== 星アニメ（月ページ） ========== */
+  .stars {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle 2s infinite alternate;
+  }
+
+  @keyframes twinkle {
+    from { opacity: 0.3; transform: scale(0.8); }
+    to   { opacity: 1;   transform: scale(1.2); }
+  }
+</style>
+</head>
+<body>
+
+<div class="book-container">
+
+  <!-- ============ Page 1: タイトル ============ -->
+  <div class="page page-title active" id="page-0">
+    <svg class="illustration" width="220" height="220" viewBox="0 0 220 220" onclick="handleTap(this, 'bounce')">
+      <!-- 赤ちゃんの顔 -->
+      <circle cx="110" cy="110" r="95" fill="#FFDAB9" stroke="#F4A460" stroke-width="4"/>
+      <!-- ほっぺ -->
+      <circle cx="75" cy="125" r="18" fill="#FFB6C1" opacity="0.7"/>
+      <circle cx="145" cy="125" r="18" fill="#FFB6C1" opacity="0.7"/>
+      <!-- 目 -->
+      <circle cx="85" cy="98" r="14" fill="white"/>
+      <circle cx="135" cy="98" r="14" fill="white"/>
+      <circle cx="88" cy="100" r="8" fill="#3a3a3a"/>
+      <circle cx="138" cy="100" r="8" fill="#3a3a3a"/>
+      <circle cx="91" cy="97" r="3" fill="white"/>
+      <circle cx="141" cy="97" r="3" fill="white"/>
+      <!-- まゆ -->
+      <path d="M72 82 Q85 76 98 82" stroke="#c8956a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M122 82 Q135 76 148 82" stroke="#c8956a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <!-- 鼻 -->
+      <ellipse cx="110" cy="114" rx="8" ry="5" fill="#F4A460" opacity="0.6"/>
+      <!-- 口（笑顔） -->
+      <path d="M88 132 Q110 152 132 132" stroke="#c8956a" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- 髪 -->
+      <path d="M40 85 Q55 30 110 18 Q165 30 180 85" fill="#8B4513" stroke="none"/>
+      <path d="M40 85 Q38 65 50 55" fill="#8B4513"/>
+      <path d="M180 85 Q182 65 170 55" fill="#8B4513"/>
+      <!-- 耳 -->
+      <ellipse cx="18" cy="110" rx="18" ry="22" fill="#FFDAB9" stroke="#F4A460" stroke-width="3"/>
+      <ellipse cx="202" cy="110" rx="18" ry="22" fill="#FFDAB9" stroke="#F4A460" stroke-width="3"/>
+    </svg>
+
+    <div class="title-text">
+      <div class="title-main">あかちゃんの<br>えほん</div>
+      <div class="title-sub">10〜12 か月むけ</div>
+    </div>
+  </div>
+
+  <!-- ============ Page 2: いぬ ============ -->
+  <div class="page page-dog" id="page-1">
+    <svg class="illustration" width="240" height="220" viewBox="0 0 240 220" onclick="handleTap(this, 'bounce')">
+      <!-- 体 -->
+      <ellipse cx="120" cy="160" rx="72" ry="52" fill="#D2691E"/>
+      <!-- 頭 -->
+      <circle cx="120" cy="85" r="65" fill="#D2691E"/>
+      <!-- 耳（垂れ耳） -->
+      <ellipse cx="62" cy="75" rx="28" ry="42" fill="#8B4513" transform="rotate(-15 62 75)"/>
+      <ellipse cx="178" cy="75" rx="28" ry="42" fill="#8B4513" transform="rotate(15 178 75)"/>
+      <!-- 顔の白い部分 -->
+      <ellipse cx="120" cy="100" rx="42" ry="35" fill="#F5DEB3"/>
+      <!-- 目 -->
+      <circle cx="100" cy="78" r="12" fill="white"/>
+      <circle cx="140" cy="78" r="12" fill="white"/>
+      <circle cx="103" cy="80" r="7" fill="#2d1a00"/>
+      <circle cx="143" cy="80" r="7" fill="#2d1a00"/>
+      <circle cx="106" cy="77" r="2.5" fill="white"/>
+      <circle cx="146" cy="77" r="2.5" fill="white"/>
+      <!-- 鼻 -->
+      <ellipse cx="120" cy="98" rx="14" ry="10" fill="#1a1a1a"/>
+      <circle cx="115" cy="95" r="3" fill="rgba(255,255,255,0.3)"/>
+      <!-- 口 -->
+      <path d="M106 110 Q120 124 134 110" stroke="#1a1a1a" stroke-width="3.5" fill="#FF8C69" stroke-linecap="round"/>
+      <!-- 舌 -->
+      <ellipse cx="120" cy="118" rx="12" ry="9" fill="#FF6B6B"/>
+      <!-- 尻尾 -->
+      <path d="M192 145 Q225 120 215 100" stroke="#D2691E" stroke-width="18" fill="none" stroke-linecap="round"/>
+      <!-- 足 -->
+      <ellipse cx="85" cy="205" rx="22" ry="14" fill="#D2691E"/>
+      <ellipse cx="155" cy="205" rx="22" ry="14" fill="#D2691E"/>
+      <!-- スポット -->
+      <circle cx="155" cy="155" r="18" fill="#8B4513" opacity="0.5"/>
+    </svg>
+    <div class="word-main">いぬ</div>
+    <div class="word-sound" id="sound-1">ワン　ワン！🐾</div>
+    <div class="tap-hint">たっぷして みて！</div>
+  </div>
+
+  <!-- ============ Page 3: ねこ ============ -->
+  <div class="page page-cat" id="page-2">
+    <svg class="illustration" width="230" height="220" viewBox="0 0 230 220" onclick="handleTap(this, 'wobble')">
+      <!-- 体 -->
+      <ellipse cx="115" cy="162" rx="68" ry="50" fill="#E8E8E8"/>
+      <!-- 尻尾 -->
+      <path d="M183 155 Q218 130 212 95 Q206 75 195 80" stroke="#C0C0C0" stroke-width="16" fill="none" stroke-linecap="round"/>
+      <!-- 頭 -->
+      <circle cx="115" cy="88" r="62" fill="#E8E8E8"/>
+      <!-- 耳 -->
+      <polygon points="68,48 48,10 92,28" fill="#E8E8E8" stroke="#E8E8E8"/>
+      <polygon points="162,48 182,10 138,28" fill="#E8E8E8" stroke="#E8E8E8"/>
+      <!-- 耳の内側 -->
+      <polygon points="70,46 56,20 88,32" fill="#FFB6C1"/>
+      <polygon points="160,46 174,20 142,32" fill="#FFB6C1"/>
+      <!-- 目 -->
+      <ellipse cx="95" cy="80" rx="16" ry="18" fill="#90EE90"/>
+      <ellipse cx="135" cy="80" rx="16" ry="18" fill="#90EE90"/>
+      <ellipse cx="95" cy="80" rx="7" ry="16" fill="#1a1a1a"/>
+      <ellipse cx="135" cy="80" rx="7" ry="16" fill="#1a1a1a"/>
+      <circle cx="98" cy="76" r="3" fill="white"/>
+      <circle cx="138" cy="76" r="3" fill="white"/>
+      <!-- 鼻 -->
+      <polygon points="115,100 108,108 122,108" fill="#FFB6C1"/>
+      <!-- 口 -->
+      <path d="M115 108 L100 118" stroke="#C0C0C0" stroke-width="3" stroke-linecap="round"/>
+      <path d="M115 108 L130 118" stroke="#C0C0C0" stroke-width="3" stroke-linecap="round"/>
+      <!-- ひげ -->
+      <line x1="60" y1="105" x2="100" y2="108" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="58" y1="115" x2="100" y2="113" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="130" y1="108" x2="170" y2="105" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="130" y1="113" x2="172" y2="115" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- ほっぺ -->
+      <circle cx="85" cy="115" r="14" fill="#FFB6C1" opacity="0.5"/>
+      <circle cx="145" cy="115" r="14" fill="#FFB6C1" opacity="0.5"/>
+      <!-- 足 -->
+      <ellipse cx="83" cy="207" rx="22" ry="13" fill="#E8E8E8"/>
+      <ellipse cx="147" cy="207" rx="22" ry="13" fill="#E8E8E8"/>
+    </svg>
+    <div class="word-main">ねこ</div>
+    <div class="word-sound" id="sound-2">ニャー　ニャー！🐱</div>
+    <div class="tap-hint">たっぷして みて！</div>
+  </div>
+
+  <!-- ============ Page 4: ボール ============ -->
+  <div class="page page-ball" id="page-3">
+    <svg class="illustration" width="220" height="220" viewBox="0 0 220 220" onclick="handleTap(this, 'bounce')">
+      <!-- ボール本体 -->
+      <circle cx="110" cy="110" r="95" fill="#FF4444"/>
+      <!-- 縫い目 -->
+      <path d="M15 110 Q55 55 110 55 Q165 55 205 110" stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M15 110 Q55 165 110 165 Q165 165 205 110" stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <!-- 光沢 -->
+      <ellipse cx="72" cy="62" rx="28" ry="18" fill="rgba(255,255,255,0.35)" transform="rotate(-30 72 62)"/>
+      <!-- 影 -->
+      <ellipse cx="110" cy="210" rx="60" ry="8" fill="rgba(0,0,0,0.15)"/>
+    </svg>
+    <div class="word-main">ボール</div>
+    <div class="word-sound" id="sound-3">ころ　ころ〜⚽</div>
+    <div class="tap-hint">たっぷして みて！</div>
+  </div>
+
+  <!-- ============ Page 5: たいよう ============ -->
+  <div class="page page-sun" id="page-4">
+    <svg class="illustration" width="230" height="230" viewBox="0 0 230 230" onclick="handleTap(this, 'spin')">
+      <!-- 光の筋 -->
+      <g id="sunrays">
+        <line x1="115" y1="10" x2="115" y2="35" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+        <line x1="115" y1="195" x2="115" y2="220" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+        <line x1="10" y1="115" x2="35" y2="115" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+        <line x1="195" y1="115" x2="220" y2="115" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+        <line x1="37" y1="37" x2="55" y2="55" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+        <line x1="175" y1="175" x2="193" y2="193" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+        <line x1="193" y1="37" x2="175" y2="55" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+        <line x1="55" y1="175" x2="37" y2="193" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+      </g>
+      <!-- 太陽本体 -->
+      <circle cx="115" cy="115" r="75" fill="#FFD700" stroke="#FFA500" stroke-width="4"/>
+      <!-- 光沢 -->
+      <circle cx="85" cy="80" r="20" fill="rgba(255,255,255,0.3)"/>
+      <!-- 顔 -->
+      <circle cx="95" cy="105" r="10" fill="#FF8C00"/>
+      <circle cx="135" cy="105" r="10" fill="#FF8C00"/>
+      <circle cx="98" cy="102" r="4" fill="white"/>
+      <circle cx="138" cy="102" r="4" fill="white"/>
+      <path d="M88 132 Q115 150 142 132" stroke="#FF8C00" stroke-width="5" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="word-main">たいよう</div>
+    <div class="word-sound" id="sound-4">キラ　キラ✨</div>
+    <div class="tap-hint">たっぷして みて！</div>
+  </div>
+
+  <!-- ============ Page 6: りんご ============ -->
+  <div class="page page-apple" id="page-5">
+    <svg class="illustration" width="210" height="230" viewBox="0 0 210 230" onclick="handleTap(this, 'wobble')">
+      <!-- 葉っぱ -->
+      <ellipse cx="115" cy="28" rx="30" ry="18" fill="#4CAF50" transform="rotate(-25 115 28)"/>
+      <ellipse cx="95" cy="25" rx="22" ry="14" fill="#66BB6A" transform="rotate(20 95 25)"/>
+      <!-- 茎 -->
+      <rect x="101" y="18" width="8" height="28" rx="4" fill="#795548"/>
+      <!-- りんご本体 -->
+      <path d="M105 45 Q40 48 30 110 Q22 165 60 195 Q85 215 105 212 Q125 215 150 195 Q188 165 180 110 Q170 48 105 45Z" fill="#E53935"/>
+      <!-- 真ん中のくぼみ -->
+      <path d="M88 46 Q105 35 122 46" stroke="#C62828" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <!-- 光沢 -->
+      <ellipse cx="72" cy="90" rx="22" ry="32" fill="rgba(255,255,255,0.3)" transform="rotate(-15 72 90)"/>
+      <!-- 影 -->
+      <ellipse cx="105" cy="220" rx="55" ry="7" fill="rgba(0,0,0,0.12)"/>
+    </svg>
+    <div class="word-main">りんご</div>
+    <div class="word-sound" id="sound-5">あか　あか！🍎</div>
+    <div class="tap-hint">たっぷして みて！</div>
+  </div>
+
+  <!-- ============ Page 7: おつき ============ -->
+  <div class="page page-moon" id="page-6">
+    <!-- 星 -->
+    <div class="stars">
+      <div class="star" style="width:5px;height:5px;top:8%;left:12%;animation-delay:0s;"></div>
+      <div class="star" style="width:4px;height:4px;top:15%;left:75%;animation-delay:0.3s;"></div>
+      <div class="star" style="width:6px;height:6px;top:5%;left:55%;animation-delay:0.6s;"></div>
+      <div class="star" style="width:3px;height:3px;top:22%;left:30%;animation-delay:0.9s;"></div>
+      <div class="star" style="width:5px;height:5px;top:12%;left:88%;animation-delay:0.2s;"></div>
+      <div class="star" style="width:4px;height:4px;top:30%;left:8%;animation-delay:0.7s;"></div>
+      <div class="star" style="width:3px;height:3px;top:35%;left:65%;animation-delay:1.1s;"></div>
+      <div class="star" style="width:6px;height:6px;top:18%;left:45%;animation-delay:0.4s;"></div>
+    </div>
+
+    <svg class="illustration" width="210" height="210" viewBox="0 0 210 210" onclick="handleTap(this, 'pop')">
+      <!-- お月さま（三日月） -->
+      <circle cx="110" cy="105" r="88" fill="#FFE66D"/>
+      <circle cx="150" cy="78" r="74" fill="#1a1a4e"/>
+      <!-- 光沢 -->
+      <ellipse cx="68" cy="65" rx="18" ry="26" fill="rgba(255,255,255,0.25)" transform="rotate(-20 68 65)"/>
+      <!-- 顔 -->
+      <circle cx="78" cy="95" r="9" fill="#E6B800"/>
+      <circle cx="80" cy="93" r="3.5" fill="white"/>
+      <circle cx="105" cy="115" r="9" fill="#E6B800"/>
+      <circle cx="107" cy="113" r="3.5" fill="white"/>
+      <!-- 眠たそうな目 -->
+      <path d="M66 96 Q78 88 90 96" stroke="#E6B800" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M93 116 Q105 108 117 116" stroke="#E6B800" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <!-- 口 -->
+      <path d="M70 120 Q88 130 88 120" stroke="#E6B800" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <!-- ほっぺ -->
+      <circle cx="65" cy="118" r="10" fill="#FFB347" opacity="0.5"/>
+    </svg>
+    <div class="word-main">おつき さま</div>
+    <div class="word-sound" id="sound-6">おやすみ〜🌙</div>
+    <div class="tap-hint">たっぷして みて！</div>
+  </div>
+
+  <!-- ナビゲーション -->
+  <div class="nav">
+    <button class="nav-btn" id="btn-prev" onclick="changePage(-1)" disabled>◀</button>
+    <div class="dots" id="dots"></div>
+    <button class="nav-btn" id="btn-next" onclick="changePage(1)">▶</button>
+  </div>
+
+</div>
+
+<script>
+  const TOTAL = 7;
+  let current = 0;
+  let isAnimating = false;
+
+  // ドットを生成
+  const dotsEl = document.getElementById('dots');
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function updateUI() {
+    document.querySelectorAll('.page').forEach((p, i) => {
+      p.classList.toggle('active', i === current);
+    });
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+    document.getElementById('btn-prev').disabled = current === 0;
+    document.getElementById('btn-next').disabled = current === TOTAL - 1;
+  }
+
+  function changePage(dir) {
+    if (isAnimating) return;
+    const next = current + dir;
+    if (next < 0 || next >= TOTAL) return;
+    goTo(next);
+  }
+
+  function goTo(idx) {
+    if (idx === current || isAnimating) return;
+    isAnimating = true;
+    current = idx;
+    updateUI();
+    setTimeout(() => { isAnimating = false; }, 450);
+  }
+
+  function handleTap(el, animClass) {
+    // SVGアニメーション
+    el.classList.remove(animClass);
+    void el.offsetWidth; // reflow
+    el.classList.add(animClass);
+
+    // 擬音語アニメーション
+    const pageEl = el.closest('.page');
+    const sound = pageEl.querySelector('.word-sound');
+    if (sound) {
+      sound.classList.remove('ping');
+      void sound.offsetWidth;
+      sound.classList.add('ping');
+    }
+
+    el.addEventListener('animationend', () => el.classList.remove(animClass), { once: true });
+    if (sound) sound.addEventListener('animationend', () => sound.classList.remove('ping'), { once: true });
+  }
+
+  // キーボード操作
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changePage(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changePage(-1);
+  });
+
+  // スワイプ操作
+  let startX = 0;
+  const bc = document.querySelector('.book-container');
+  bc.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+  bc.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) changePage(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
+  updateUI();
+</script>
+
+</body>
+</html>

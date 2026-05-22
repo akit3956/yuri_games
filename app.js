@@ -2,6 +2,7 @@ const gameContainer = document.getElementById('game-container');
 const menuTrigger = document.getElementById('menu-trigger');
 const adultMenu = document.getElementById('adult-menu');
 const gameBtns = document.querySelectorAll('.game-select-btn');
+const ehonFrame = document.getElementById('ehon-frame');
 
 let currentGame = 1;
 let audioCtx;
@@ -292,18 +293,24 @@ menuTrigger.addEventListener('click', () => {
 gameBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
         currentGame = parseInt(e.target.getAttribute('data-game'));
-        gameBtns.forEach(b => b.style.backgroundColor = '#f0f0f0');
+        gameBtns.forEach(b => b.style.backgroundColor = '');
         e.target.style.backgroundColor = '#a0e0a0';
-
-        gameContainer.innerHTML = '';
-        gameContainer.style.backgroundColor = '#ffebcd';
-
-        if (currentGame === 1) initGame1();
-        else if (currentGame === 2) initGame2();
-        else if (currentGame === 3) initGame3();
 
         adultMenu.classList.add('hidden');
         stopBGM();
+
+        if (currentGame === 4) {
+            gameContainer.style.display = 'none';
+            ehonFrame.style.display = 'block';
+        } else {
+            ehonFrame.style.display = 'none';
+            gameContainer.style.display = '';
+            gameContainer.innerHTML = '';
+            gameContainer.style.backgroundColor = '#ffebcd';
+            if (currentGame === 1) initGame1();
+            else if (currentGame === 2) initGame2();
+            else if (currentGame === 3) initGame3();
+        }
     });
 });
 

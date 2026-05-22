@@ -15,25 +15,27 @@
 
     <div id="game-container"></div>
 
+    <!-- 絵本用iframe（絵本選択時のみ表示） -->
+    <iframe id="ehon-frame" src="ehon.html" style="display:none;"></iframe>
+
     <div id="menu-trigger" title="メニュー">⚙️</div>
 
     <div id="adult-menu" class="hidden">
-        <!-- タイトル：カードの外・背景の上に表示 -->
         <div class="home-header">
             <p class="game-title">ぽんぽん・ぱっ！</p>
             <p class="game-subtitle">〜ゆうりのおとあそび〜</p>
         </div>
-        <!-- ゲーム選択カード -->
         <div class="menu-content">
             <p class="game-desc">あそびをえらんでね</p>
-            <div class="btn-row">
+            <div class="btn-grid">
                 <button class="game-select-btn" data-game="1">✨<br>キラキラ<br>ポンポン</button>
                 <button class="game-select-btn" data-game="2">🐶<br>どうぶつ<br>いないばぁ</button>
                 <button class="game-select-btn" data-game="3">🚗<br>のりもの<br>ブーブー</button>
+                <button class="game-select-btn" data-game="4">📖<br>えほん<br>よんでね</button>
             </div>
         </div>
     </div>
 
-    <script src="app.js?v=17"></script>
+    <script src="app.js?v=18"></script>
 </body>
 </html>
