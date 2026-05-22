@@ -289,6 +289,13 @@ menuTrigger.addEventListener('click', () => {
     startBGM();
 });
 
+// ホーム画面表示中にどこかをタッチしたらBGM開始（touchstartはclickより先に発火するのでstart→即stopを防げる）
+document.addEventListener('touchstart', () => {
+    if (!adultMenu.classList.contains('hidden')) {
+        startBGM();
+    }
+}, { passive: true });
+
 gameBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
         currentGame = parseInt(e.target.getAttribute('data-game'));
@@ -296,11 +303,11 @@ gameBtns.forEach(btn => {
         e.target.style.backgroundColor = '#a0e0a0';
 
         adultMenu.classList.add('hidden');
-        stopBGM();
+        setTimeout(stopBGM, 300);
 
         if (currentGame === 4) {
             // 絵本はページ遷移（iOSのSpeech APIはiframe内で動かないため）
-            window.location.href = 'ehon.html';
+            window.location.href = 'ehon.html?' + Date.now();
         } else {
             gameContainer.innerHTML = '';
             gameContainer.style.backgroundColor = '#ffebcd';
@@ -318,12 +325,4 @@ preloadAnimalSounds();
 initGame1();
 adultMenu.classList.remove('hidden');
 
-// 最初のタッチでBGM開始（iOSはユーザー操作後でないと再生できない）
-document.addEventListener('touchend', function startBGMOnce() {
-    startBGM();
-    document.removeEventListener('touchend', startBGMOnce);
-}, { once: true });
-document.addEventListener('click', function startBGMOnce() {
-    startBGM();
-    document.removeEventListener('click', startBGMOnce);
-}, { once: true });
+
