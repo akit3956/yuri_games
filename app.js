@@ -306,14 +306,13 @@ gameBtns.forEach(btn => {
         e.target.style.backgroundColor = '#a0e0a0';
 
         adultMenu.classList.add('hidden');
+        // 1.5秒後にBGMを止める（最初のタップでもBGMが聞こえるように）
+        setTimeout(stopBGM, 1500);
 
         if (currentGame === 4) {
             // 絵本はページ遷移（iOSのSpeech APIはiframe内で動かないため）
-            // えほんでは朗読のためBGMを止める
-            stopBGM();
             window.location.href = 'ehon.html?' + Date.now();
         } else {
-            // ゲーム中もBGMは流し続ける
             gameContainer.innerHTML = '';
             gameContainer.style.backgroundColor = '#ffebcd';
             if (currentGame === 1) initGame1();
