@@ -565,7 +565,7 @@
   </div>
 
   <!-- もどるボタン -->
-  <button id="back-btn" onclick="window.location.href='index.html'">🏠 もどる</button>
+  <button id="back-btn" onclick="stopEhonBgm(); window.location.href='index.html';">🏠 もどる</button>
 
   <!-- ナビゲーション -->
   <div class="nav">
@@ -577,6 +577,34 @@
 </div>
 
 <script>
+  // 絵本用BGM
+  const ehonBgm = new Audio('sounds/ehon_bgm.mp3');
+  ehonBgm.loop = true;
+  ehonBgm.volume = 0.35;
+
+  function startEhonBgm() {
+    if (ehonBgm.paused) {
+      ehonBgm.play().catch(() => {});
+    }
+  }
+
+  function stopEhonBgm() {
+    if (!ehonBgm.paused) {
+      ehonBgm.pause();
+      ehonBgm.currentTime = 0;
+    }
+  }
+
+  // 最初のタッチでBGM開始（iOS制限対策）
+  document.addEventListener('touchend', function bgmOnce() {
+    startEhonBgm();
+    document.removeEventListener('touchend', bgmOnce);
+  }, { once: true });
+  document.addEventListener('click', function bgmOnce() {
+    startEhonBgm();
+    document.removeEventListener('click', bgmOnce);
+  }, { once: true });
+
   const TOTAL = 7;
   let current = 0;
   let isAnimating = false;
