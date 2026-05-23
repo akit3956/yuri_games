@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="no">
+  <title>はじめてのえほん</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Hachi Maru Pop", cursive;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .book-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .page {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      padding-top: 60px;
+    }
+    .page.active { display: flex; }
+
+    .page-header {
+      font-size: clamp(1.3rem, 5vw, 2.2rem);
+      color: white;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .items-grid {
+      display: grid;
+      gap: 12px;
+      width: 100%;
+    }
+    .n1 { grid-template-columns: 1fr; max-width: 300px; }
+    .n2 { grid-template-columns: 1fr 1fr; max-width: 460px; }
+    .n3 { grid-template-columns: 1fr 1fr 1fr; max-width: 480px; }
+    .n4 { grid-template-columns: 1fr 1fr; max-width: 460px; }
+
+    .item-btn {
+      background: rgba(255,255,255,0.92);
+      border: none;
+      border-radius: 20px;
+      padding: 12px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      transition: transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .item-btn:active { transform: scale(0.92); }
+
+    .item-img {
+      width: clamp(55px, 16vw, 110px);
+      height: clamp(55px, 16vw, 110px);
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .item-img.large {
+      width: clamp(120px, 35vw, 220px);
+      height: clamp(120px, 35vw, 220px);
+    }
+    .item-label {
+      font-size: clamp(0.8rem, 3vw, 1.1rem);
+      color: #333;
+      font-weight: bold;
+    }
+
+    @keyframes bigBounce {
+      0%   { transform: scale(1); }
+      25%  { transform: scale(1.5); }
+      55%  { transform: scale(0.88); }
+      75%  { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .item-btn.bounce { animation: bigBounce 0.55s ease; }
+
+    .bg-cover   { background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff); }
+    .bg-bw      { background: linear-gradient(135deg, #555, #999, #ddd, #999); }
+    .bg-colors  { background: linear-gradient(135deg, #ff6b6b, #ffd93d, #4d96ff, #6bcb77); }
+    .bg-animal  { background: linear-gradient(135deg, #6bcb77, #a8e6cf, #d4f5e2); }
+    .bg-food    { background: linear-gradient(135deg, #ff9f43, #ffd93d, #ff6b6b); }
+    .bg-size    { background: linear-gradient(135deg, #4d96ff, #74b9ff, #a0c4ff); }
+    .bg-shape   { background: linear-gradient(135deg, #c77dff, #e0aaff, #f3d9ff); }
+    .bg-things  { background: linear-gradient(135deg, #ff9f43, #feca57, #fff3cd); }
+    .bg-end     { background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #c77dff); }
+
+    .nav-bar {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: rgba(0,0,0,0.18);
+    }
+    .nav-btn {
+      font-size: 1.5rem;
+      background: rgba(255,255,255,0.82);
+      border: none;
+      border-radius: 50%;
+      width: 44px; height: 44px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn:disabled { opacity: 0.28; }
+    .dots { display: flex; gap: 8px; align-items: center; }
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dot.active { background: white; transform: scale(1.4); }
+
+    .size-big {
+      width: clamp(120px, 32vw, 200px);
+      height: clamp(120px, 32vw, 200px);
+    }
+    .size-small {
+      width: clamp(40px, 10vw, 70px);
+      height: clamp(40px, 10vw, 70px);
+    }
+    #back-btn {
+      position: fixed;
+      top: 10px; left: 10px;
+      z-index: 100;
+      background: rgba(255,255,255,0.85);
+      border: none;
+      border-radius: 24px;
+      padding: 8px 16px;
+      font-family: "Hachi Maru Pop", cursive;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body>
+
+<button id="back-btn" onclick="stopEhonBgm(); window.location.href='index.html';">🏠 もどる</button>
+
+<div class="book-wrap">
+
+  <!-- ページ1：表紙 -->
+  <div class="page bg-cover active" id="p1">
+    <div class="page-header">はじめてのえほん</div>
+    <div class="items-grid n1">
+      <button class="item-btn" onclick="speakItem(this, 'あははっ！')">
+        <img src="images/ehon/表紙.png" class="item-img large" alt="表紙">
+        <span class="item-label">タップしてあそぼう！</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ページ2：白黒 -->
+  <div class="page bg-bw" id="p2">
+    <div class="page-header">くろと しろ</div>
+    <div class="items-grid n2">
+      <button class="item-btn" onclick="speakItem(this, 'しろ！')">
+        <img src="images/ehon/しろ.png" class="item-img" alt="しろ">
+        <span class="item-label">しろ</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'くろ！')">
+        <img src="images/ehon/くろ.png" class="item-img" alt="くろ">
+        <span class="item-label">くろ</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ページ3：いろ -->
+  <div class="page bg-colors" id="p3">
+    <div class="page-header">いろいろな いろ</div>
+    <div class="items-grid n4">
+      <button class="item-btn" onclick="speakItem(this, 'あか！')">
+        <img src="images/ehon/あか.png" class="item-img" alt="あか">
+        <span class="item-label">あか</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'きいろ！')">
+        <img src="images/ehon/きいろ.png" class="item-img" alt="きいろ">
+        <span class="item-label">きいろ</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'あお！')">
+        <img src="images/ehon/あお.png" class="item-img" alt="あお">
+        <span class="item-label">あお</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'みどり！')">
+        <img src="images/ehon/みどり.png" class="item-img" alt="みどり">
+        <span class="item-label">みどり</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ページ4：どうぶつ -->
+  <div class="page bg-animal" id="p4">
+    <div class="page-header">どうぶつさん だあれ？</div>
+    <div class="items-grid n4">
+      <button class="item-btn" onclick="speakItem(this, 'いぬさん わんわん！')">
+        <img src="images/ehon/いぬ.png" class="item-img" alt="いぬ">
+        <span class="item-label">いぬ</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'ねこさん ニャーニャー！')">
+        <img src="images/ehon/ねこ.png" class="item-img" alt="ねこ">
+        <span class="item-label">ねこ</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'うさぎさん ぴょんぴょん！')">
+        <img src="images/ehon/うさぎ.png" class="item-img" alt="うさぎ">
+        <span class="item-label">うさぎ</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'ライオン がおー！')">
+        <img src="images/ehon/ライオン.png" class="item-img" alt="ライオン">
+        <span class="item-label">ライオン</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ページ5：たべもの -->
+  <div class="page bg-food" id="p5">
+    <div class="page-header">おいしそう！</div>
+    <div class="items-grid n4">
+      <button class="item-btn" onclick="speakItem(this, 'りんご！')">
+        <img src="images/ehon/りんご.png" class="item-img" alt="りんご">
+        <span class="item-label">りんご</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'バナナ！')">
+        <img src="images/ehon/バナナ.png" class="item-img" alt="バナナ">
+        <span class="item-label">バナナ</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'もも！')">
+        <img src="images/ehon/もも.png" class="item-img" alt="もも">
+        <span class="item-label">もも</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'ぶどう！')">
+        <img src="images/ehon/ぶどう.png" class="item-img" alt="ぶどう">
+        <span class="item-label">ぶどう</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ページ6：おおきい・ちいさい -->
+  <div class="page bg-size" id="p6">
+    <div class="page-header">おおきい？ ちいさい？</div>
+    <div class="items-grid n2">
+      <button class="item-btn" onclick="speakItem(this, 'おぉぉきい！')">
+        <img src="images/ehon/おおきい.png" class="item-img size-big" alt="おおきい">
+        <span class="item-label" style="font-size:1.3rem;">おおきい</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'ちいさーい！')">
+        <img src="images/ehon/小さい.png" class="item-img size-small" alt="ちいさい">
+        <span class="item-label" style="font-size:0.8rem;">ちいさい</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ページ7：かたち -->
+  <div class="page bg-shape" id="p7">
+    <div class="page-header">どんな かたち？</div>
+    <div class="items-grid n3">
+      <button class="item-btn" onclick="speakItem(this, 'まる！')">
+        <img src="images/ehon/まる.png" class="item-img" alt="まる">
+        <span class="item-label">まる</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'さんかく！')">
+        <img src="images/ehon/さんかく.png" class="item-img" alt="さんかく">
+        <span class="item-label">さんかく</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'しかく！')">
+        <img src="images/ehon/しかく.png" class="item-img" alt="しかく">
+        <span class="item-label">しかく</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ページ8：みのまわりのもの -->
+  <div class="page bg-things" id="p8">
+    <div class="page-header">みてみて！</div>
+    <div class="items-grid n4">
+      <button class="item-btn" onclick="speakItem(this, 'くるま ブーブー！')">
+        <img src="images/ehon/クルマ.png" class="item-img" alt="くるま">
+        <span class="item-label">くるま</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'コップ！')">
+        <img src="images/ehon/コップ.png" class="item-img" alt="コップ">
+        <span class="item-label">コップ</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'ボール！')">
+        <img src="images/ehon/ボール.png" class="item-img" alt="ボール">
+        <span class="item-label">ボール</span>
+      </button>
+      <button class="item-btn" onclick="speakItem(this, 'とけい！')">
+        <img src="images/ehon/時計.png" class="item-img" alt="とけい">
+        <span class="item-label">とけい</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ページ9：おわり -->
+  <div class="page bg-end" id="p9">
+    <div class="items-grid n1">
+      <button class="item-btn" onclick="speakItem(this, 'またあしたも あそぼうね！')">
+        <img src="images/ehon/終わり.png" class="item-img large" alt="おわり">
+        <span class="item-label">またあしたも あそぼうね！</span>
+      </button>
+    </div>
+  </div>
+
+</div><!-- .book-wrap -->
+
+<div class="nav-bar">
+  <button class="nav-btn" id="btn-prev">◀</button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-btn" id="btn-next">▶</button>
+</div>
+
+<script>
+  const ehonBgm = new Audio('sounds/ehon_bgm.mp3');
+  ehonBgm.loop = true;
+  ehonBgm.volume = 0.35;
+  function startEhonBgm() {
+    if (ehonBgm.paused) ehonBgm.play().catch(() => {});
+  }
+  function stopEhonBgm() {
+    if (!ehonBgm.paused) { ehonBgm.pause(); ehonBgm.currentTime = 0; }
+  }
+  document.addEventListener('touchend', function bgmOnce() {
+    startEhonBgm();
+    document.removeEventListener('touchend', bgmOnce);
+  }, { once: true });
+  document.addEventListener('click', function bgmOnce() {
+    startEhonBgm();
+    document.removeEventListener('click', bgmOnce);
+  }, { once: true });
+
+  function speakItem(btn, text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    btn.classList.remove('bounce');
+    void btn.offsetWidth;
+    btn.classList.add('bounce');
+    btn.addEventListener('animationend', () => btn.classList.remove('bounce'), { once: true });
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.rate = 0.85;
+    msg.pitch = 1.5;
+    msg.volume = 1.0;
+    window.speechSynthesis.speak(msg);
+  }
+
+  const TOTAL = 9;
+  let current = 0;
+  let isAnimating = false;
+
+  const narrations = [
+    'はじめてのえほん。タップしてあそぼう！',
+    'くろと しろ',
+    'いろいろな いろ',
+    'どうぶつさん だあれ？',
+    'おいしそう！',
+    'おおきい ちいさい',
+    'どんな かたち？',
+    'みてみて！',
+    'おしまい。またあしたも あそぼうね！',
+  ];
+
+  const dotsEl = document.getElementById('dots');
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function updateUI() {
+    document.querySelectorAll('.page').forEach((p, i) => p.classList.toggle('active', i === current));
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    document.getElementById('btn-prev').disabled = current === 0;
+    document.getElementById('btn-next').disabled = current === TOTAL - 1;
+    readNarration();
+  }
+
+  function readNarration() {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    setTimeout(() => {
+      const msg = new SpeechSynthesisUtterance(narrations[current]);
+      msg.rate = 0.82;
+      msg.pitch = 1.3;
+      msg.volume = 1.0;
+      window.speechSynthesis.speak(msg);
+    }, 500);
+  }
+
+  function goTo(idx) {
+    if (idx === current || isAnimating) return;
+    isAnimating = true;
+    current = idx;
+    updateUI();
+    setTimeout(() => { isAnimating = false; }, 400);
+  }
+
+  function changePage(dir) {
+    const next = current + dir;
+    if (next >= 0 && next < TOTAL) goTo(next);
+  }
+
+  document.getElementById('btn-prev').addEventListener('click', () => changePage(-1));
+  document.getElementById('btn-next').addEventListener('click', () => changePage(1));
+
+  let startX = 0;
+  const wrap = document.querySelector('.book-wrap');
+  wrap.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+  wrap.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) changePage(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') changePage(1);
+    if (e.key === 'ArrowLeft') changePage(-1);
+  });
+
+  updateUI();
+</script>
+</body>
+</html>

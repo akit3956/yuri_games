@@ -2,6 +2,7 @@ const gameContainer = document.getElementById('game-container');
 const menuTrigger = document.getElementById('menu-trigger');
 const adultMenu = document.getElementById('adult-menu');
 const gameBtns = document.querySelectorAll('.game-select-btn');
+const ehonSelect = document.getElementById('ehon-select');
 
 let currentGame = 1;
 let audioCtx;
@@ -306,13 +307,12 @@ gameBtns.forEach(btn => {
         e.target.style.backgroundColor = '#a0e0a0';
 
         adultMenu.classList.add('hidden');
-        // 1.5秒後にBGMを止める（最初のタップでもBGMが聞こえるように）
-        setTimeout(stopBGM, 1500);
 
         if (currentGame === 4) {
-            // 絵本はページ遷移（iOSのSpeech APIはiframe内で動かないため）
-            window.location.href = 'ehon.html?' + Date.now();
+            // えほん選択画面を表示（BGMはそのまま）
+            ehonSelect.classList.remove('hidden');
         } else {
+            setTimeout(stopBGM, 1500);
             gameContainer.innerHTML = '';
             gameContainer.style.backgroundColor = '#ffebcd';
             if (currentGame === 1) initGame1();
@@ -320,6 +320,23 @@ gameBtns.forEach(btn => {
             else if (currentGame === 3) initGame3();
         }
     });
+});
+
+// 絵本選択ハンドラ
+document.getElementById('ehon-btn-yuri').addEventListener('click', () => {
+    ehonSelect.classList.add('hidden');
+    stopBGM();
+    window.location.href = 'ehon.html?' + Date.now();
+});
+document.getElementById('ehon-btn-hajimete').addEventListener('click', () => {
+    ehonSelect.classList.add('hidden');
+    stopBGM();
+    window.location.href = 'hajimete_ehon.html?' + Date.now();
+});
+document.getElementById('ehon-back').addEventListener('click', () => {
+    ehonSelect.classList.add('hidden');
+    adultMenu.classList.remove('hidden');
+    startBGM();
 });
 
 // 起動時に音声ファイルをプリロード
