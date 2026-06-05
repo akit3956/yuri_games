@@ -311,6 +311,9 @@ gameBtns.forEach(btn => {
         if (currentGame === 4) {
             // えほん選択画面を表示（BGMはそのまま）
             ehonSelect.classList.remove('hidden');
+        } else if (currentGame === 5) {
+            stopBGM();
+            window.location.href = 'yuuri_ripple.html?' + Date.now();
         } else {
             setTimeout(stopBGM, 1500);
             gameContainer.innerHTML = '';

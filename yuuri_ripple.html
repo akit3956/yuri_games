@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ゆうりの 音と光の波紋あそび</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #FAF8F5; /* 暖かみのある明るいクリーム色 */
+            overflow: hidden;
+            /* ズームやスクロールなどのデフォルトタッチ挙動を完全に無効化 */
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #startPrompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(0, 0, 0, 0.3); /* 明るい背景に合わせて文字を暗く */
+            font-size: 1.5rem;
+            pointer-events: none; /* タッチイベントを邪魔しない */
+            transition: opacity 1s ease-out;
+            text-align: center;
+        }
+
+        .hidden {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="startPrompt">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+        </svg>
+        <br>
+        さわって はじめる
+    </div>
+    
+    <canvas id="rippleCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('rippleCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false }); // 最適化のためalpha: false
+        const startPrompt = document.getElementById('startPrompt');
+
+        // --- キャンバスリサイズ処理 ---
+        let width, height;
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- 音響エンジン (Web Audio API) ---
+        let audioCtx = null;
+        
+        // ペンタトニックスケール (C Major Pentatonic) の周波数
+        // どんな順番で鳴らしても不協和音にならず、心地よいアンビエントな響きになる
+        const pentatonicScale = [
+            261.63, // C4
+            293.66, // D4
+            329.63, // E4
+            392.00, // G4
+            440.00, // A4
+            523.25, // C5
+            587.33, // D5
+            659.25, // E5
+            783.99, // G5
+            880.00  // A5
+        ];
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(x) {
+            if (!audioCtx) return;
+
+            // X座標に応じて鳴らす音階（インデックス）を決定
+            // 画面左端が0、右端が配列の最後になるようにマッピング
+            const ratio = Math.max(0, Math.min(1, x / width));
+            const index = Math.floor(ratio * pentatonicScale.length);
+            // 境界値対策
+            const safeIndex = Math.min(index, pentatonicScale.length - 1);
+            const freq = pentatonicScale[safeIndex];
+
+            // オシレーターとゲイン（音量）ノードを作成
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            // サイン波で丸みのある音色に
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            
+            // エンベロープ（音の立ち上がりと消え方の設定）
+            // アタック: 0.05秒かけてスッと立ち上がる（耳に刺さらないように）
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
+            
+            // リリース: 2.5秒かけてゆっくり消えていく（リバーブのような余韻）
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+
+            osc.start(now);
+            osc.stop(now + 2.5);
+        }
+
+
+        // --- 描画エンジン (波紋のアニメーション) ---
+        const ripples = [];
+
+        class Ripple {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 0;
+                this.targetRadius = Math.max(100, Math.min(width, height) * 0.3); // 画面サイズに応じた最大半径
+                this.alpha = 0.8;
+                
+                // Y座標に応じて色を決定 (上: 暖色, 下: 寒色)
+                // Yの割合(0~1) に応じて Hue(色相)を 0(赤) 〜 240(青) にマッピング
+                const ratio = Math.max(0, Math.min(1, y / height));
+                const hue = Math.floor(ratio * 240);
+                this.color = `hsla(${hue}, 80%, 65%, {alpha})`;
+                
+                // 複数の波紋が重なっても綺麗になるよう、少しランダムな揺らぎを加える
+                this.velocity = 0.04 + Math.random() * 0.03;
+            }
+
+            update() {
+                // ease-out の動き（目標値に近づくにつれて遅くなる）
+                this.radius += (this.targetRadius - this.radius) * this.velocity;
+                // 透明度をゆっくり下げる
+                this.alpha -= 0.01;
+            }
+
+            draw() {
+                if (this.alpha <= 0) return;
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                
+                // 輪郭（波の広がり）
+                ctx.strokeStyle = this.color.replace('{alpha}', this.alpha);
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                // 中心部の淡い光
+                ctx.fillStyle = this.color.replace('{alpha}', this.alpha * 0.3);
+                ctx.fill();
+            }
+        }
+
+        function animate() {
+            // 背景を暖かみのあるクリーム色で塗りつぶす。
+            ctx.fillStyle = '#FAF8F5';
+            ctx.fillRect(0, 0, width, height);
+
+            // 明るい背景で色が重なった時に綺麗に見えるよう、通常の合成（または乗算）を使用
+            ctx.globalCompositeOperation = 'source-over';
+
+            // 波紋の更新と描画
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                const r = ripples[i];
+                r.update();
+                r.draw();
+                
+                // 完全に消えた波紋は配列から削除
+                if (r.alpha <= 0) {
+                    ripples.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // アニメーションループ開始
+        animate();
+
+
+        // --- インタラクション (マルチタッチ処理) ---
+        let isStarted = false;
+        
+        // スワイプ時に音が鳴りすぎないようにするためのスロットル制御
+        let lastMoveTime = 0;
+
+        function handleInput(x, y, isMove = false) {
+            // 初回タップ時の処理
+            if (!isStarted) {
+                isStarted = true;
+                startPrompt.classList.add('hidden');
+                initAudio();
+            }
+
+            // スワイプ(Move)の時は、一定時間間隔を空ける（音が濁るのを防ぐ）
+            if (isMove) {
+                const now = Date.now();
+                if (now - lastMoveTime < 150) return; // 150ms間隔
+                lastMoveTime = now;
+            }
+
+            // 波紋を生成
+            ripples.push(new Ripple(x, y));
+            // 音を鳴らす
+            playSound(x);
+        }
+
+        // タッチイベント (スマホ・タブレット)
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // デフォルトのスクロール等をキャンセル
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                handleInput(touch.clientX, touch.clientY, false);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                handleInput(touch.clientX, touch.clientY, true);
+            }
+        }, { passive: false });
+
+        // マウスイベント (PCでのテスト用)
+        let isMouseDown = false;
+        canvas.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            handleInput(e.clientX, e.clientY, false);
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if (isMouseDown) {
+                handleInput(e.clientX, e.clientY, true);
+            }
+        });
+        canvas.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+        canvas.addEventListener('mouseleave', () => {
+            isMouseDown = false;
+        });
+
+    </script>
+</body>
+</html>
