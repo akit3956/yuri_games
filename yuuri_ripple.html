@@ -109,13 +109,13 @@
             880.00  // A5
         ];
 
-        async function initAudio() {
+        function initAudio() {
             if (!audioCtx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 audioCtx = new AudioContext();
             }
             if (audioCtx.state === 'suspended') {
-                await audioCtx.resume();
+                audioCtx.resume();
             }
         }
 
@@ -234,30 +234,26 @@
         // スワイプ時に音が鳴りすぎないようにするためのスロットル制御
         let lastMoveTime = 0;
 
-        async function handleInput(x, y, isMove = false) {
-            // 初回タップ時の処理
+        function handleInput(x, y, isMove = false) {
             if (!isStarted) {
                 isStarted = true;
                 startPrompt.classList.add('hidden');
-                await initAudio();
             }
 
-            // スワイプ(Move)の時は、一定時間間隔を空ける（音が濁るのを防ぐ）
             if (isMove) {
                 const now = Date.now();
-                if (now - lastMoveTime < 150) return; // 150ms間隔
+                if (now - lastMoveTime < 150) return;
                 lastMoveTime = now;
             }
 
-            // 波紋を生成
             ripples.push(new Ripple(x, y));
-            // 音を鳴らす
             playSound(x);
         }
 
-        // タッチイベント (スマホ・タブレット)
+        // タッチイベント — AudioContextをtouchstart内で同期的に初期化（iOS必須）
         canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // デフォルトのスクロール等をキャンセル
+            e.preventDefault();
+            initAudio(); // ← ここで同期的に呼ぶのがiOSのポイント
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const touch = e.changedTouches[i];
                 handleInput(touch.clientX, touch.clientY, false);
