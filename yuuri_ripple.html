@@ -116,7 +116,7 @@
         }
 
         function playSound(x, volume = 0.3) {
-            if (!audioCtx || audioCtx.state !== 'running') return;
+            if (!audioCtx) return;
 
             const ratio = Math.max(0, Math.min(1, x / width));
             const freq = pentatonicScale[Math.min(Math.floor(ratio * pentatonicScale.length), pentatonicScale.length - 1)];
